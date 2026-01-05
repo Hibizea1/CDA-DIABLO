@@ -1,5 +1,21 @@
-# Visual Studio 2015 user specific files
+# Revision 2025-05-20.1
+# For UNREAL projects only!
+
+# Misc junk
+.rsynced-flag
+
+# Packaging folder
+Windows/
+
+# Visual Studio user specific files
 .vs/
+.vscode/
+.vsconfig
+
+# Misc
+*.zip
+*.7z
+*.stackdump
 
 # Compiled Object files
 *.slo
@@ -40,6 +56,8 @@
 *.sdf
 *.VC.db
 *.VC.opendb
+*.user
+*.sln.docstates
 
 # Precompiled Assets
 SourceArt/**/*.png
@@ -47,6 +65,7 @@ SourceArt/**/*.tga
 
 # Binary Files
 Binaries/*
+Plugins/*/Binaries/*
 Plugins/**/Binaries/*
 
 # Builds
@@ -68,7 +87,116 @@ Saved/*
 
 # Compiled source files for the engine to use
 Intermediate/*
+Plugins/*/Intermediate/*
 Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Extras
+Debug/
+Collections/
+Developers/
+
+###### More extras
+.consulo/
+ExportedObj/
+sysinfo.txt
+
+# Gradle cache directory
+.gradle/
+
+# VIM
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+*.un~
+Session.vim
+.netrwhist
+*~
+
+# git-eye trash
+/.project
+
+# Windows image file caches
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+*.tmp
+
+# Word temporary
+~$*.doc*
+
+# Excel temporary
+~$*.xls*
+
+# Excel Backup File
+*.xlk
+
+#MONO develop
+#User Specific
+*.userprefs
+*.usertasks
+
+# OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Based on https://github.com/JetBrains/resharper-rider-samples/
+# Common IntelliJ Platform excludes
+
+# User specific
+**/.idea/**/workspace.xml
+**/.idea/**/tasks.xml
+**/.idea/shelf/*
+**/.idea/dictionaries
+**/.idea/httpRequests/
+
+# Sensitive or high-churn files
+**/.idea/**/dataSources/
+**/.idea/**/dataSources.ids
+**/.idea/**/dataSources.xml
+**/.idea/**/dataSources.local.xml
+**/.idea/**/sqlDataSources.xml
+**/.idea/**/dynamic.xml
+
+# Rider
+# Rider auto-generates .iml files, and contentModel.xml
+**/.idea/**/*.iml
+**/.idea/**/contentModel.xml
+**/.idea/**/modules.xml
