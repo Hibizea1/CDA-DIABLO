@@ -42,6 +42,9 @@ class DIABLO_API UItemDataAsset : public UPrimaryDataAsset
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Models")
 	UStaticMesh* Mesh = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	int32 Item_ID = 0;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EEquipmentType EquipmentType = EEquipmentType::Weapon;
 	

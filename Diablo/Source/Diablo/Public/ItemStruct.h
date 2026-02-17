@@ -16,9 +16,15 @@ enum class ERarity : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FItemStruct
+struct FItemStruct : public FTableRowBase
 {
 	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	int32 Item_ID = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	FString Name;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
 	int32 ItemLevel = 1;

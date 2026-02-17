@@ -22,7 +22,8 @@ public class Diablo : ModuleRules
 			"UMG",
 			"Slate",
 			"Json",
-            "JsonUtilities"
+            "JsonUtilities",
+            "HTTP"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
@@ -39,12 +40,6 @@ public class Diablo : ModuleRules
 		});
 
 		// Uncomment if you are using Slate UI
-		PrivateDependencyModuleNames.AddRange(new string[] 
-			{ 
-			"SQLiteCore",
-				"SQLiteSupport" 
-		});
-
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
 
