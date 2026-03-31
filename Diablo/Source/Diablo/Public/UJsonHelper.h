@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "UItemSaveGame.h"
 #include "FPlayerData.h"
 #include "UJsonHelper.generated.h"
 struct FItemStruct;
@@ -35,13 +36,20 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static FString CreateLoginMessage(const FString& Username, const FString& Password);
 
-	// UFUNCTION(BlueprintCallable)
-	// static FString CreateCharacterSaveMessage();
+	static void SaveItemsToSaveGame(const TMap<FString, FItemArrayWrapper>& ItemsByType);
+	static TMap<FString, FItemArrayWrapper> ParseItemsJSON(const FString& JsonContent);
 
+	UFUNCTION(BlueprintCallable)
+	static UItemSaveGame* LoadItemsSaveGame();
+	UFUNCTION(BlueprintCallable)
+	static void DebugPrintAllItems();
 
 	
 	UFUNCTION(BlueprintCallable)
 	static TArray<FItemSave> ParseInventoriesFromJson(const FString& JsonString);
 
 	static FString BuildItemsJson(const TArray<FItemStruct*>& Rows);
+
+	UFUNCTION(BlueprintCallable)
+	static UItemSaveGame* LoadItemsSaveGameBP();
 };

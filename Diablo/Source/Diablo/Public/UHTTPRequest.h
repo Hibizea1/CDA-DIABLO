@@ -18,24 +18,18 @@ class UUHTTPRequest : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintCallable)
-	static void SaveRequest(const int Level, const int Experience, const int Gold);
+	static void SaveRequest(const FPlayerData& Player);
+	
+	static void GetItemJSON(TFunction<void(bool, FString)> OnCompleted);
+
 	UFUNCTION(BlueprintCallable)
-	static void GetItemCSV();
-
-	// This function uses a C++ TFunction callback and a plain struct (FPlayerData).
-	// Such a signature cannot be exposed to Blueprints (UFUNCTION) because
-	// TFunction is not reflectable. Keep it C++-only by removing UFUNCTION.
-	static void GetInventories(TFunction<void(FPlayerData)> OnCompleted);
-
-	static void SaveInventories(
-		const TArray<FItemSave>& Items,
-		TFunction<void(bool, const FString&)> OnCompleted
-	);
+	static void SaveInventories(const TArray<FItemSave>& Items, const TArray<FItemSave>& Equipment);
 
 	static void SendToServer(const FString& Json);
 
 	static TArray<FString> GetCSVFilePath(FString Path);
-
+	
+	static FString CleanWeaponType(FString& Cell);
 
 	static FString Access_Token;
 

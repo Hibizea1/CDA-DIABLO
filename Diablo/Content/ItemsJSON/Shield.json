@@ -1,0 +1,14 @@
+{
+	"items": [
+		{
+			"id": "50",
+			"name": "test5",
+			"type": "EEquipmentType::Weapon",
+			"rarity": "0",
+			"Item_ID": "4",
+			"Price": "1",
+			"mesh_path": null,
+			"weaponType": "EWeaponType::Shield"
+		}
+	]
+}

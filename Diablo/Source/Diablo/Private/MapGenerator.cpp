@@ -215,13 +215,13 @@ void AMapGenerator::GetRandomEnemies(const FVector& Location, const FRotator& Ro
 {
 	if (Enemies.Num() == 0 || !GetWorld()) return ;
 	int32 Index = FMath::RandRange(0, Enemies.Num() - 1);
-	TSubclassOf<AEnemies> EnemyClass = Enemies[Index];
+	TSubclassOf<AUEntity> EnemyClass = Enemies[Index];
 	if (!EnemyClass) return ;
 	FActorSpawnParameters SpawnParams;
 	UE_LOG(LogTemp, Display, TEXT("SpawnEnemies"));
 	SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	GetWorld()->SpawnActor<AEnemies>(EnemyClass, Location, Rotation, SpawnParams);
+	GetWorld()->SpawnActor<AUEntity>(EnemyClass, Location, Rotation, SpawnParams);
 }
 
 ATile* AMapGenerator::GetTile(int32 X, int32 Y)

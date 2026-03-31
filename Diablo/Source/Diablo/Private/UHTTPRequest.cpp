@@ -6,192 +6,115 @@
 #include "FPlayerData.h"
 #include "UJsonHelper.h"
 #include "http.h"
+#include "Misc/AES.h"
+#include "Misc/Base64.h"
 #include "JsonObjectConverter.h"
 #include "Kismet/GameplayStatics.h"
 
 
+struct FItemData;
 FString UUHTTPRequest::Access_Token = "";
 FString UUHTTPRequest::Refresh_Token = "";
 
 
-void UUHTTPRequest::SaveRequest(const int Level, const int Experience, const int Gold)
+void UUHTTPRequest::SaveRequest(const FPlayerData& Player)
 {
-	auto user_id = UJsonHelper::GetStoredUserId();
 	FHttpModule& HttpModule = FHttpModule::Get();
 
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
 		HttpModule.CreateRequest();
 
-	Request->SetURL(FString("http://127.0.0.1:8080/update_character.php"));
+	Request->SetURL(FString("http://127.0.0.1:8080/php/update_character.php"));
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
-	Request->SetContentAsString(FString::Printf(
-		TEXT("{\"user_id\":%d,\"character\":{\"level\":%d,\"xp\":%d,\"gold\":\"%d\"}}"),
-		user_id,
-		Level,
-		Experience,
-		Gold));
-	Request->ProcessRequest();
-	Request->OnProcessRequestComplete().BindLambda([](FHttpRequestPtr request, FHttpResponsePtr response, bool success)
+	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+
+	// Build JSON payload from the Player array
+	TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
+
+	TSharedRef<FJsonObject> PlayerObj = MakeShared<FJsonObject>();
+	PlayerObj->SetNumberField("level", Player.Level);
+	PlayerObj->SetNumberField("xp", Player.Experience);
+	PlayerObj->SetNumberField("gold", Player.Gold);
+	PlayerObj->SetNumberField("strength", Player.strenght);
+	PlayerObj->SetNumberField("health", Player.health);
+	PlayerObj->SetNumberField("Experience", Player.Experience);
+	PlayerObj->SetNumberField("intelligence", Player.intelligence);
+	PlayerObj->SetNumberField("mana", Player.mana);
+	PlayerObj->SetNumberField("stamina", Player.stamina);
+
+	RootObject->SetObjectField("character", PlayerObj);
+
+	// Serialize JSON to string
+	FString JsonPayload;
+	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonPayload);
+	if (!FJsonSerializer::Serialize(RootObject, Writer))
 	{
-		if (!success || !response.IsValid())
-		{
-			UE_LOG(LogTemp, Error, TEXT("HTTP Request failed"));
-			return;
-		}
+		UE_LOG(LogTemp, Error, TEXT("SaveRequest: Failed to serialize JSON payload"));
+		return;
+	}
 
-		const int32 Code = response->GetResponseCode();
+	Request->SetContentAsString(JsonPayload);
 
-		if (Code != 200)
-		{
-			UE_LOG(LogTemp, Error, TEXT("HTTP Error code: %d"), Code);
-			return;
-		}
-
-		const FString ResponseBody = response->GetContentAsString();
-		UE_LOG(LogTemp, Log, TEXT("Server Response: %s"), *ResponseBody);
-	});
-}
-
-void UUHTTPRequest::GetItemCSV()
-{
-	FHttpModule& Http = FHttpModule::Get();
-
-	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/items.csv");
-	Request->SetVerb("GET");
-	Request->SetHeader("Content-Type", "text/csv");
-
+	// Bind the completion delegate BEFORE starting the request
 	Request->OnProcessRequestComplete().BindLambda(
-		[](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
+		[](FHttpRequestPtr request, FHttpResponsePtr response, bool success)
 		{
-			if (!bSuccess || !Res.IsValid())
+			if (!success || !response.IsValid())
 			{
-				UE_LOG(LogTemp, Error, TEXT("Failed To GetItemCSV"));
+				UE_LOG(LogTemp, Error, TEXT("HTTP Request failed"));
+				const FString Msg = response.IsValid()
+					                    ? response->GetContentAsString()
+					                    : TEXT("No response from server");
 				return;
 			}
 
-			// Get CSV content
-			const FString CsvContent = Res->GetContentAsString();
-			UE_LOG(LogTemp, Warning, TEXT("CSV RECEIVED:\n%s"), *CsvContent);
+			const int32 Code = response->GetResponseCode();
+			const FString ResponseBody = response->GetContentAsString();
 
-			// Split CSV lines
-			TArray<FString> Lines;
-			CsvContent.ParseIntoArrayLines(Lines);
-
-			if (Lines.Num() <= 1)
+			if (Code != 200)
 			{
-				UE_LOG(LogTemp, Error, TEXT("CSV file empty or invalid"));
+				UE_LOG(LogTemp, Error, TEXT("HTTP Error code: %d Message: %s"), Code, *ResponseBody);
 				return;
 			}
 
-			// Header parsing
-			TArray<FString> Headers;
-			Lines[0].ParseIntoArray(Headers, TEXT(","));
-
-			int32 TypeIndex = Headers.Find(TEXT("type"));
-			if (TypeIndex == INDEX_NONE)
-			{
-				UE_LOG(LogTemp, Error, TEXT("CSV missing 'type' column"));
-				return;
-			}
-
-			// Items grouped by weapon type
-			TMap<FString, TArray<TSharedPtr<FJsonObject>>> SplitJson;
-
-			for (int32 i = 1; i < Lines.Num(); i++)
-			{
-				TArray<FString> Cells;
-				Lines[i].ParseIntoArray(Cells, TEXT(";"));
-
-				if (Cells.Num() != Headers.Num())
-					continue;
-
-				FString WeaponType = Cells[TypeIndex];
-
-				// Create JSON object for each row
-				TSharedPtr<FJsonObject> ItemJson = MakeShared<FJsonObject>();
-
-				for (int32 c = 0; c < Headers.Num(); c++)
-					ItemJson->SetStringField(Headers[c], Cells[c]);
-
-				// Add to map
-				SplitJson.FindOrAdd(WeaponType).Add(ItemJson);
-			}
-
-			// Save each type in a separate JSON file
-			const FString SaveDir = FPaths::ProjectSavedDir() / TEXT("ItemsJSON/");
-			IFileManager::Get().MakeDirectory(*SaveDir, true);
-
-			for (auto& Pair : SplitJson)
-			{
-				FString TypeName = Pair.Key;
-				TArray<TSharedPtr<FJsonValue>> JsonArray;
-
-				for (auto& Obj : Pair.Value)
-					JsonArray.Add(MakeShared<FJsonValueObject>(Obj));
-
-				TSharedPtr<FJsonObject> Root = MakeShared<FJsonObject>();
-				Root->SetArrayField("items", JsonArray);
-
-				// Convert to JSON string
-				FString OutputJson;
-				TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputJson);
-				FJsonSerializer::Serialize(Root.ToSharedRef(), Writer);
-
-				// File path
-				FString FilePath = SaveDir / (TypeName + TEXT(".json"));
-
-				if (FFileHelper::SaveStringToFile(OutputJson, *FilePath))
-				{
-					UE_LOG(LogTemp, Log, TEXT("Saved JSON for type %s -> %s"), *TypeName, *FilePath);
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("Failed to save %s.json"), *TypeName);
-				}
-			}
-
-			UE_LOG(LogTemp, Log, TEXT("All weapon type JSON files generated successfully."));
+			UE_LOG(LogTemp, Log, TEXT("SaveRequest Server Response: %s"), *ResponseBody);
 		}
 	);
 
 	Request->ProcessRequest();
 }
 
-
-void UUHTTPRequest::GetInventories(TFunction<void(FPlayerData)> OnCompleted)
+void UUHTTPRequest::GetItemJSON(TFunction<void(bool, FString)> OnCompleted)
 {
 	FHttpModule& Http = FHttpModule::Get();
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/load_inventories.php");
+	Request->SetURL("http://127.0.0.1:8080/php/items.json");
 	Request->SetVerb("GET");
-	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
+	Request->SetHeader("Content-Type", "application/json");
 
 	Request->OnProcessRequestComplete().BindLambda(
 		[OnCompleted](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
 		{
-			FPlayerData Data; // variable locale
-			if (bSuccess && Res.IsValid())
+			if (!bSuccess || !Res.IsValid())
 			{
-				Data.Items = UJsonHelper::ParseInventoriesFromJson(Res->GetContentAsString());
+				UE_LOG(LogTemp, Error, TEXT("GetItemJSON: Failed to download JSON"));
+				OnCompleted(false, Res->GetContentAsString());
+				return;
 			}
-			else
-			{
-				UE_LOG(LogTemp, Error, TEXT("HTTP request failed"));
-			}
+			UE_LOG(LogTemp, Error, TEXT("GetItemJSON: %s"), *Res->GetContentAsString());
 
-			// Renvoie les données via callback
-			OnCompleted(Data);
-		}
-	);
+			FString JsonContent = Res->GetContentAsString();
+			TMap<FString, FItemArrayWrapper> ItemsByType = UJsonHelper::ParseItemsJSON(JsonContent);
+
+			UJsonHelper::SaveItemsToSaveGame(ItemsByType);
+			OnCompleted(true, "success");
+		});
 
 	Request->ProcessRequest();
 }
 
-void UUHTTPRequest::SaveInventories(
-	const TArray<FItemSave>& Items,
-	TFunction<void(bool, const FString&)> OnCompleted)
+void UUHTTPRequest::SaveInventories(const TArray<FItemSave>& Items, const TArray<FItemSave>& Equipment)
 {
 	// === Construction manuelle du JSON ===
 	TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
@@ -207,7 +130,19 @@ void UUHTTPRequest::SaveInventories(
 		JsonItems.Add(MakeShared<FJsonValueObject>(Obj));
 	}
 
-	RootObject->SetArrayField("result", JsonItems);
+	TArray<TSharedPtr<FJsonValue>> JsonEquipment;
+	for (const FItemSave& _Equipment : Equipment)
+	{
+		TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
+		Obj->SetNumberField("item_id", _Equipment.item_id);
+		Obj->SetNumberField("rarity", _Equipment.rarity);
+		Obj->SetNumberField("lvl", _Equipment.lvl);
+
+		JsonEquipment.Add(MakeShared<FJsonValueObject>(Obj));
+	}
+
+	RootObject->SetArrayField("Items", JsonItems);
+	RootObject->SetArrayField("Equipment", JsonEquipment);
 
 	// Convertir en string
 	FString JsonPayload;
@@ -220,30 +155,27 @@ void UUHTTPRequest::SaveInventories(
 	FHttpModule& Http = FHttpModule::Get();
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
 
-	Request->SetURL("http://127.0.0.1:8080/save_inventories.php");
+	Request->SetURL("http://127.0.0.1:8080/php/save_inventories.php");
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
 	Request->SetContentAsString(JsonPayload);
 
 	Request->OnProcessRequestComplete().BindLambda(
-		[OnCompleted](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
+		[](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
 		{
 			if (!bSuccess || !Res.IsValid())
 			{
 				UE_LOG(LogTemp, Error, TEXT("SaveInventories: request failed."));
-				OnCompleted(false, Res->GetContentAsString());
 				return;
 			}
 
 			UE_LOG(LogTemp, Log, TEXT("SaveInventories response: %s"), *Res->GetContentAsString());
-			OnCompleted(true, Res->GetContentAsString());
 		}
 	);
 
 	Request->ProcessRequest();
 }
-
 
 
 TArray<FString> UUHTTPRequest::GetCSVFilePath(FString Path)
@@ -264,7 +196,7 @@ void UUHTTPRequest::SendToServer(const FString& Json)
 	FHttpModule& Http = FHttpModule::Get();
 
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/update_items.php");
+	Request->SetURL("http://127.0.0.1:8080/php/update_items.php");
 	Request->SetVerb("POST");
 	Request->SetHeader("Content-Type", "application/json");
 	Request->SetContentAsString(Json);
@@ -285,4 +217,30 @@ void UUHTTPRequest::SendToServer(const FString& Json)
 	);
 
 	Request->ProcessRequest();
+}
+
+FString UUHTTPRequest::CleanWeaponType(FString& RawType)
+{
+	// Trim spaces
+	RawType = RawType.TrimStartAndEnd();
+
+	// Remove enum prefix
+	if (RawType.Contains("::"))
+	{
+		RawType = RawType.RightChop(RawType.Find("::") + 2);
+	}
+
+	// Replace forbidden characters
+	RawType.ReplaceInline(TEXT(" "), TEXT("_"));
+	RawType.ReplaceInline(TEXT("/"), TEXT("_"));
+	RawType.ReplaceInline(TEXT("\\"), TEXT("_"));
+	RawType.ReplaceInline(TEXT(":"), TEXT("_"));
+	RawType.ReplaceInline(TEXT("*"), TEXT("_"));
+	RawType.ReplaceInline(TEXT("?"), TEXT("_"));
+	RawType.ReplaceInline(TEXT("\""), TEXT("_"));
+	RawType.ReplaceInline(TEXT("<"), TEXT("_"));
+	RawType.ReplaceInline(TEXT(">"), TEXT("_"));
+	RawType.ReplaceInline(TEXT("|"), TEXT("_"));
+
+	return RawType;
 }

@@ -29,6 +29,9 @@ struct FItemStruct : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
 	int32 ItemLevel = 1;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	int32 DamageMultiplier = 1;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EEquipmentType EquipmentType = EEquipmentType::Weapon;
 	
@@ -39,8 +42,13 @@ struct FItemStruct : public FTableRowBase
 	ERarity Rarity = ERarity::Common;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
-	UTexture2D* Icon = nullptr;
+	FString IconPath;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
-	UStaticMesh* Mesh = nullptr;
+	FString MeshPath;
+
+	bool operator==(const FItemStruct& Other) const
+	{
+		return Item_ID == Other.Item_ID;
+	}
 };

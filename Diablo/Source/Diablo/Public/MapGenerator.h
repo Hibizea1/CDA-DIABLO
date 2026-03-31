@@ -6,6 +6,7 @@
 #include "Enemies.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
+#include "UEntity.h"
 #include "MapGenerator.generated.h"
 
 class ANavMeshBoundsVolume;
@@ -58,7 +59,7 @@ public:
 	TSubclassOf<ATile> TileClass;
 
 	UPROPERTY(Blueprintable, BlueprintReadWrite, Category = "Grid")
-	TArray<TSubclassOf<AEnemies>> Enemies;
+	TArray<TSubclassOf<AUEntity>> Enemies;
 
 	TArray<TArray<ATile*>> Grid;
 	UPROPERTY(Blueprintable, BlueprintReadOnly, Category = "Creation")

@@ -25,5 +25,23 @@ public:
 	int32 Gold;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 stamina;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 health;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 strenght;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 mana;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int32 intelligence;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FItemSave> Items;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TArray<FItemSave> Equipment;
 };

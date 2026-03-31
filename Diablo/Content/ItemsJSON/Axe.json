@@ -1,0 +1,14 @@
+{
+	"items": [
+		{
+			"id": "49",
+			"name": "test1",
+			"type": "EEquipmentType::Weapon",
+			"rarity": "0",
+			"Item_ID": "3",
+			"Price": "1",
+			"mesh_path": null,
+			"weaponType": "EWeaponType::Axe"
+		}
+	]
+}
