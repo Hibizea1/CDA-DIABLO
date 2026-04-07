@@ -11,7 +11,7 @@
 struct FPlayerData;
 
 // Declare a Blueprint-friendly dynamic multicast delegate that passes an FDeathStruct
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDeathSignature, FDeathStruct, DeathData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLevelUp);
 
 UCLASS(ClassGroup=(Character), meta=(BlueprintSpawnableComponent))
 class DIABLO_API UCharacterComponent : public UActorComponent
@@ -26,7 +26,7 @@ public:
 	// Sets default values for this component's properties
 	UCharacterComponent();
 
-	UPROPERTY(BlueprintReadWrite, Category = "Death Drop")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Death Drop")
 	FDeathStruct DeathData;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Player Stats")
@@ -44,9 +44,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Damage")
 	float RarityMultiplier;
 
-	// Expose the death event to Blueprints so designers can bind to it
 	UPROPERTY(BlueprintAssignable, Category = "Events")
-	FOnDeathSignature OnDeath;
+	FOnLevelUp OnLevelUp;
 
 protected:
 	// Called when the game starts
@@ -60,6 +59,12 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetStat(FPlayerData _stat);
+
+	UFUNCTION(BlueprintCallable)
+	void AddExp(int Value);
+	
+	UFUNCTION(BlueprintCallable)
+	void SetRequiresExp();
 
 	UFUNCTION(BlueprintCallable)
 	void UpdateStat(EStatsType statType, float value);

@@ -89,8 +89,9 @@ void UUHTTPRequest::GetItemJSON(TFunction<void(bool, FString)> OnCompleted)
 {
 	FHttpModule& Http = FHttpModule::Get();
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/php/items.json");
+	Request->SetURL("http://127.0.0.1:8080/php/get_item.php");
 	Request->SetVerb("GET");
+	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
 	Request->SetHeader("Content-Type", "application/json");
 
 	Request->OnProcessRequestComplete().BindLambda(

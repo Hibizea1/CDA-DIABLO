@@ -15,16 +15,16 @@ struct FLevelStatStruct
 public :
 	
 	UPROPERTY(BlueprintReadOnly)
-	int HealthLevel;
+	int HealthLevel = 1;
 
 	UPROPERTY(BlueprintReadOnly)
-	int StaminaLevel;
+	int StaminaLevel = 1;
 
 	UPROPERTY(BlueprintReadOnly)
-	int StrengthLevel;
+	int StrengthLevel = 1;
 	
 	UPROPERTY(BlueprintReadOnly)
-	int ManaLevel;
+	int ManaLevel = 1;
 	
 };
 
@@ -35,6 +35,9 @@ struct FStatsStruct
 	GENERATED_BODY()
 
 public :
+
+	UPROPERTY(BlueprintReadOnly)
+	int CurrentLevel = 1;
 	
 	UPROPERTY(BlueprintReadWrite)
 	float CurrentHealth;
@@ -74,7 +77,7 @@ protected:
 	virtual void BeginPlay() override;
 	
 public:
-
+	
 	FOnDead OnDead;
 	
 	// Called every frame

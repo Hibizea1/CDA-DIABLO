@@ -3,6 +3,7 @@
 
 #include "CharacterComponent.h"
 
+#include "DeathSubSystem.h"
 #include "FPlayerData.h"
 
 // Sets default values for this component's properties
@@ -58,9 +59,20 @@ void UCharacterComponent::SetHealth(float damage)
 	Stats.CurrentHealth -= damage;
 	if (Stats.CurrentHealth <= 0)
 	{
-		// Clamp to zero
 		Stats.CurrentHealth = 0.f;
-		OnDeath.Broadcast(DeathData);
+		UGameInstance* GI = GetWorld()->GetGameInstance();
+		if (GI)
+		{
+			UDeathSubSystem* Subsystem = GI->GetSubsystem<UDeathSubSystem>();
+			if (Subsystem)
+			{
+				Subsystem->OnDeath.Broadcast(DeathData);
+			}
+		}
+		if (AActor* Owner = GetOwner())
+		{
+			Owner->Destroy();
+		}
 	}
 }
 
@@ -122,7 +134,7 @@ void UCharacterComponent::CalculateStrength()
 	float _strengthPercent = LevelStats.StrengthLevel / 100.f;
 	float _strengthBasePercent = _strengthPercent + 1.f;
 
-	float _strengthBaseDamage = BaseDamage * _strengthBasePercent * DamageMultiplier;
+	float _strengthBaseDamage = PlayerStats->Damage * _strengthBasePercent * DamageMultiplier;
 
 	float _weaponDamage = ItemDamageMultiplier * RarityMultiplier;
 
@@ -139,5 +151,31 @@ void UCharacterComponent::SetStat(FPlayerData _stat)
 	LevelStats.StaminaLevel = _stat.stamina;
 	LevelStats.StrengthLevel = _stat.strenght;
 	LevelStats.ManaLevel = _stat.mana;
+	Stats.CurrentLevel = _stat.Level;
+	Stats.CurrentExperience = _stat.Experience;
 	CalculateStats();
+}
+
+void UCharacterComponent::AddExp(int Value)
+{
+	Stats.CurrentExperience += Value;
+	if (Stats.CurrentExperience >= Stats.RequiredExperience)
+	{
+		while (Stats.CurrentExperience >= Stats.RequiredExperience)
+		{
+			Stats.CurrentLevel++;
+			Stats.CurrentExperience -= Stats.RequiredExperience;
+			OnLevelUp.Broadcast();
+			SetRequiresExp();
+		}
+	}
+}
+
+void UCharacterComponent::SetRequiresExp()
+{
+	float levelPow = (Stats.CurrentLevel * Stats.CurrentLevel * Stats.CurrentLevel) * 0.5f;
+	float levelMultiplier = Stats.CurrentLevel * 40;
+
+	UE_LOG(LogTemp, Log, TEXT("RequiredExperience = %f"), levelPow + levelMultiplier);
+	Stats.RequiredExperience = levelPow + levelMultiplier;
 }

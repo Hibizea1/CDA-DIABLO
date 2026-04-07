@@ -1,0 +1,43 @@
+*.txt
+*.dll
+*.exe
+*.bat
+*.ttf
+*.tps
+*.ini
+*.sh
+*.html
+Build/Build 6/Windows/Engine/Content/Slate/Cursor/invisible.cur
+Build/Build 6/Windows/Engine/Content/Renderer/TessellationTable.bin
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.json
+Build/Build 6/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.json
+Build/Build 6/Windows/Diablo/Saved/SaveGames/ItemsSaveSlot.sav
+Build/Build 6/Windows/Diablo/Saved/Logs/Diablo.log
+Build/Build 6/Windows/Diablo/Content/Paks/global.utoc
+Build/Build 6/Windows/Diablo/Content/Paks/global.ucas
+Build/Build 6/Windows/Diablo/Content/Paks/Diablo-Windows.utoc
+Build/Build 6/Windows/Diablo/Content/Paks/Diablo-Windows.ucas
+Build/Build 6/Windows/Diablo/Content/Paks/Diablo-Windows.pak
+Build/Build 6/Windows/Diablo/Binaries/Win64/Diablo.pdb
+Build/Build 5/Windows/Engine/Content/Slate/Cursor/invisible.cur
+Build/Build 5/Windows/Engine/Content/Renderer/TessellationTable.bin
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_validation.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_synchronization2.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_shader_object.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_khronos_profiles.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_gfxreconstruct.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_crash_diagnostic.json
+Build/Build 5/Windows/Engine/Binaries/ThirdParty/Vulkan/Win64/VkLayer_api_dump.json
+Build/Build 5/Windows/Diablo/Saved/SaveGames/ItemsSaveSlot.sav
+Build/Build 5/Windows/Diablo/Saved/Logs/Diablo.log
+Build/Build 5/Windows/Diablo/Content/Paks/global.utoc
+Build/Build 5/Windows/Diablo/Content/Paks/global.ucas
+Build/Build 5/Windows/Diablo/Content/Paks/Diablo-Windows.utoc
+Build/Build 5/Windows/Diablo/Content/Paks/Diablo-Windows.ucas
+Build/Build 5/Windows/Diablo/Content/Paks/Diablo-Windows.pak
+Build/Build 5/Windows/Diablo/Binaries/Win64/Diablo.pdb
