@@ -1,5 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,22 +9,36 @@ UCLASS()
 class DIABLO_API ASpawner : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
+
+public:
 	ASpawner();
 
 	UPROPERTY(Blueprintable, BlueprintReadWrite, Category = "Grid")
 	TArray<TSubclassOf<AEnemies>> Enemies;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn", meta = (ClampMin = "0.1"))
+	float SpawnInterval = 3.0f;
+
+	// Cap local: nb max de mobs vivants gérés par CE spawner
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Cap", meta = (ClampMin = "0"))
+	int32 MaxAliveEnemies = 8;
+
+	// Rayon autour du spawner pour chercher une position de spawn
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Placement", meta = (ClampMin = "0"))
+	float SpawnRadius = 200.f;
+
+	FTimerHandle SpawnTimer;
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
-	// Called every frame
+public:
 	virtual void Tick(float DeltaTime) override;
-
 	void SpawnEnemies();
 
+private:
+	TArray<TWeakObjectPtr<AEnemies>> AliveEnemies;
+
+	void CleanupAliveEnemies();
+	bool TryGetGroundedLocationInMap(FVector& OutLocation) const;
 };

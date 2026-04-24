@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Enemies.h"
+#include "Spawner.h"
 #include "GameFramework/Actor.h"
 #include "Tile.h"
 #include "UEntity.h"
@@ -67,6 +68,9 @@ public:
 	UPROPERTY(Blueprintable, BlueprintReadWrite, Category = "Grid")
 	TArray<TSubclassOf<AUEntity>> Enemies;
 
+	UPROPERTY(Blueprintable, BlueprintReadWrite, Category = "Grid")
+	TSubclassOf<ASpawner> Spawner;
+	
 	TArray<TArray<ATile*>> Grid;
 
 	UPROPERTY(Blueprintable, BlueprintReadOnly, Category = "Creation")
@@ -75,7 +79,6 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void SetMapData();
 	void ClearMap();
 
 	void GenerateMap();
@@ -89,8 +92,6 @@ public:
 	void SpawnPlayer();
 
 	static AMapGenerator& Get();
-
-	void GetRandomEnemies(const FVector& Location, const FRotator& Rotation);
-
+	
 	ATile* GetTile(int32 X, int32 Y);
 };

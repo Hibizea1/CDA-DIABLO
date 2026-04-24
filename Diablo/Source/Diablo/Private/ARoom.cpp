@@ -176,28 +176,50 @@ void AARoom::SetLastTile(ATile* Tile)
 
 void AARoom::SpawnEnemies()
 {
-	auto& gen = AMapGenerator::Get();
-	if (Tiles.Num() == 0) return;
-
-	const float MinOffset = 200.f; 
-	const float MaxOffset = 400.f; 
-	const float SpawnZ = 100.f;
-
-	for (int i = 0; i < gen.MaxMobPerRoom; i++)
+	auto& Gen = AMapGenerator::Get();
+	if (!GetWorld() || Tiles.Num() == 0)
 	{
-		ATile* tile = GetRandomTile();
-		if (!tile) continue;
+		return;
+	}
 
-		float Angle = FMath::FRandRange(0.f, 2.f * PI);
-		float Radius = FMath::FRandRange(MinOffset, MaxOffset);
-		FVector Offset = FVector(FMath::Cos(Angle) * Radius, FMath::Sin(Angle) * Radius, 0.f);
+	if (!Gen.Spawner)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AARoom::SpawnEnemies - Spawner class non definie dans MapGenerator"));
+		return;
+	}
 
-		FVector Pos = tile->GetActorLocation() + Offset + FVector(0.f, 0.f, SpawnZ);
+	constexpr int32 SpawnersPerRoom = 3;
+	const float MinOffset = 150.f;
+	const float MaxOffset = 300.f;
+	const float SpawnZ = 50.f;
 
-		gen.GetRandomEnemies(Pos, tile->GetActorRotation());
-		UE_LOG(LogTemp, Log, TEXT("Spawn Enemies"));
+	for (int32 i = 0; i < SpawnersPerRoom; ++i)
+	{
+		ATile* Tile = GetRandomTile();
+		if (!Tile)
+		{
+			continue;
+		}
+
+		const float Angle = FMath::FRandRange(0.f, 2.f * PI);
+		const float Radius = FMath::FRandRange(MinOffset, MaxOffset);
+		const FVector Offset(FMath::Cos(Angle) * Radius, FMath::Sin(Angle) * Radius, 0.f);
+
+		const FVector SpawnPos = Tile->GetActorLocation() + Offset + FVector(0.f, 0.f, SpawnZ);
+		const FRotator SpawnRot = Tile->GetActorRotation();
+
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		ASpawner* SpawnedSpawner = GetWorld()->SpawnActor<ASpawner>(Gen.Spawner, SpawnPos, SpawnRot, Params);
+		if (!SpawnedSpawner)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("AARoom::SpawnEnemies - echec spawn spawner"));
+		}
 	}
 }
+
 
 void AARoom::SpawnWall(ATile* Tile, float MeshUnitLength, FVector Mid, FVector Dir, float Dist)
 {

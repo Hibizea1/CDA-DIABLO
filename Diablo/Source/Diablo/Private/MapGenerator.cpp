@@ -224,50 +224,6 @@ AMapGenerator& AMapGenerator::Get()
 	return *_instance;
 }
 
-void AMapGenerator::GetRandomEnemies(const FVector& Location, const FRotator& Rotation)
-{
-	if (Enemies.Num() == 0 || !GetWorld())
-		return;
-
-	const int32 ClassIndex = FMath::RandRange(0, Enemies.Num() - 1);
-	TSubclassOf<AUEntity> EnemyClass = Enemies[ClassIndex];
-	if (!EnemyClass)
-		return;
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.Owner = this;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-	AUEntity* Spawned = GetWorld()->SpawnActor<AUEntity>(EnemyClass, Location, Rotation, SpawnParams);
-	if (!Spawned)
-		return;
-
-	AEnemies* SpawnedEnemy = Cast<AEnemies>(Spawned);
-	if (!SpawnedEnemy)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Spawned actor is not AEnemies: %s"), *Spawned->GetName());
-		return;
-	}
-
-	if (CurrentMapData.Enemies.Num() == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("CurrentMapData.Enemies is empty"));
-		return;
-	}
-
-	const int32 DataIndex = FMath::RandRange(0, CurrentMapData.Enemies.Num() - 1);
-	const FMonsterStruct& MonsterData = CurrentMapData.Enemies[DataIndex];
-
-	// Stocke la data brute sur l'ennemi
-	SpawnedEnemy->Enemies = MonsterData;
-
-	// Applique les stats runtime au component
-	if (UCharacterComponent* CharComp = SpawnedEnemy->FindComponentByClass<UCharacterComponent>())
-	{
-		CharComp->SetStatByEnnemiData(MonsterData.EnnemiData);
-	}
-}
-
 ATile* AMapGenerator::GetTile(int32 X, int32 Y)
 {
 	if (X < 0 || Y < 0 || X >= CurrentMapData.Width || Y >= CurrentMapData.Height)
