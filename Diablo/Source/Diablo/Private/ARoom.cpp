@@ -195,6 +195,7 @@ void AARoom::SpawnEnemies()
 		FVector Pos = tile->GetActorLocation() + Offset + FVector(0.f, 0.f, SpawnZ);
 
 		gen.GetRandomEnemies(Pos, tile->GetActorRotation());
+		UE_LOG(LogTemp, Log, TEXT("Spawn Enemies"));
 	}
 }
 

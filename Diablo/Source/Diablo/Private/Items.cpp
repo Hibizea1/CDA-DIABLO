@@ -6,22 +6,28 @@
 // Sets default values
 AItems::AItems()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+}
 
+void AItems::InitItem(const FItemStruct& InItem)
+{
+	ItemData = InItem;
+	OnItemSpawn.Broadcast();
 }
 
 // Called when the game starts or when spawned
 void AItems::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
 void AItems::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
+void AItems::SpawnItem()
+{
+}

@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "UItemSaveGame.h"
 #include "FPlayerData.h"
+#include "MapDataSave.h"
+#include "MonsterAndBiomsSaveGame.h"
 #include "UJsonHelper.generated.h"
 struct FItemStruct;
 struct FPlayerScore;
@@ -37,14 +39,28 @@ public:
 	static FString CreateLoginMessage(const FString& Username, const FString& Password);
 
 	static void SaveItemsToSaveGame(const TMap<FString, FItemArrayWrapper>& ItemsByType);
+
+	static void SaveBiomesAndMonsterToSaveGame(const TMap<FString, FMonsterAndBiomesWrapper>& MonsterAndBiomesType);
+	static void SaveMapData(const TMap<FString, FMonsterAndBiomesWrapper>& MonsterAndBiomesType);
+
+	static FItemStruct CreateNewItem(const FItemData& Item, int32 Level, ERarity Rarity);
+
 	static TMap<FString, FItemArrayWrapper> ParseItemsJSON(const FString& JsonContent);
+
+	static TMap<FString, FMonsterAndBiomesWrapper> ParseBiomesAndMonstersJSON(const FString& JsonContent);
+
+
+	static void DebugPrintAllItems();
 
 	UFUNCTION(BlueprintCallable)
 	static UItemSaveGame* LoadItemsSaveGame();
-	UFUNCTION(BlueprintCallable)
-	static void DebugPrintAllItems();
 
-	
+	UFUNCTION(BlueprintCallable)
+	static UMapDataSave* LoadMapDataSave();
+
+	UFUNCTION(BlueprintCallable)
+	static UMonsterAndBiomsSaveGame* LoadMonsterAndBiomesSaveGame();
+
 	UFUNCTION(BlueprintCallable)
 	static TArray<FItemSave> ParseInventoriesFromJson(const FString& JsonString);
 

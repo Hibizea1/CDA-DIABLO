@@ -5,6 +5,8 @@
 
 #include "DeathSubSystem.h"
 #include "FPlayerData.h"
+#include "InventoryComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
 UCharacterComponent::UCharacterComponent()
@@ -24,6 +26,24 @@ void UCharacterComponent::BeginPlay()
 	// ...
 }
 
+void UCharacterComponent::GetPlayerInventory()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerChar)
+	{
+		return;
+	}
+
+	if (UInventoryComponent* CharComp = PlayerChar->FindComponentByClass<UInventoryComponent>())
+	{
+		Inventory = CharComp;
+	}
+}
 
 void UCharacterComponent::UpdateStat(EStatsType statType, float value)
 {
@@ -48,6 +68,8 @@ void UCharacterComponent::UpdateStat(EStatsType statType, float value)
 
 void UCharacterComponent::CalculateStats()
 {
+	GetPlayerInventory();
+
 	CalculateHealth();
 	CalculateStamina();
 	CalculateStrength();
@@ -71,6 +93,8 @@ void UCharacterComponent::SetHealth(float damage)
 		}
 		if (AActor* Owner = GetOwner())
 		{
+			OnDeathCharacter.Broadcast();
+
 			Owner->Destroy();
 		}
 	}
@@ -131,21 +155,43 @@ void UCharacterComponent::CalculateStamina()
 
 void UCharacterComponent::CalculateStrength()
 {
-	float _strengthPercent = LevelStats.StrengthLevel / 100.f;
-	float _strengthBasePercent = _strengthPercent + 1.f;
+	if (!PlayerStats)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CalculateStrength: PlayerStats is null"));
+		return;
+	}
 
-	float _strengthBaseDamage = PlayerStats->Damage * _strengthBasePercent * DamageMultiplier;
+	if (!Inventory)
+	{
+		GetPlayerInventory();
+	}
 
-	float _weaponDamage = ItemDamageMultiplier * RarityMultiplier;
+	const float StrengthPercent = LevelStats.StrengthLevel / 100.f;
+	const float StrengthBasePercent = StrengthPercent + 1.f;
+	const float StrengthBaseDamage = PlayerStats->Damage * StrengthBasePercent * DamageMultiplier;
 
-	Stats.Strength = _strengthBaseDamage + _weaponDamage;
+	float ItemMultiplier = 1.f;
+
+	if (Inventory && Inventory->HasWeapon())
+	{
+		const FItemStruct EquippedWeapon = Inventory->GetEquipedWeapon();
+		if (EquippedWeapon.DamageMultiplier > 0.f)
+		{
+			ItemMultiplier = EquippedWeapon.DamageMultiplier;
+		}
+	}
+
+	const float SafeRarityMultiplier = (RarityMultiplier > 0.f) ? RarityMultiplier : 1.f;
+	const float WeaponDamage = ItemMultiplier * SafeRarityMultiplier;
+
+	Stats.Strength = StrengthBaseDamage + WeaponDamage;
 }
 
 void UCharacterComponent::CalculateMana()
 {
 }
 
-void UCharacterComponent::SetStat(FPlayerData _stat)
+void UCharacterComponent::SetStatByPlayerData(FPlayerData _stat)
 {
 	LevelStats.HealthLevel = _stat.health;
 	LevelStats.StaminaLevel = _stat.stamina;
@@ -154,6 +200,17 @@ void UCharacterComponent::SetStat(FPlayerData _stat)
 	Stats.CurrentLevel = _stat.Level;
 	Stats.CurrentExperience = _stat.Experience;
 	CalculateStats();
+}
+
+void UCharacterComponent::SetStatByEnnemiData(FEnnemiData _stat)
+{
+	DeathData = _stat.DeathData;
+
+	Stats.MaxHealth = _stat.health;
+	Stats.CurrentHealth = _stat.health;
+	Stats.Stamina = _stat.stamina;
+	Stats.Strength = _stat.strenght;
+	Stats.Mana = _stat.mana;
 }
 
 void UCharacterComponent::AddExp(int Value)

@@ -4,8 +4,11 @@
 #include "MapGenerator.h"
 
 #include "ARoom.h"
+#include "CharacterComponent.h"
+#include "MonsterAndBiomsSaveGame.h"
 #include "NavigationSystem.h"
 #include "Tile.h"
+#include "UJsonHelper.h"
 #include "Engine/BrushShape.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
@@ -21,6 +24,17 @@ AMapGenerator::AMapGenerator()
 void AMapGenerator::BeginPlay()
 {
 	Super::BeginPlay();
+
+	auto saveMB = UJsonHelper::LoadMapDataSave();
+	if (!saveMB)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't Load Monster And Biomes save !"));
+		return;
+	}
+
+	MapDataList = saveMB->GetAllMapData();
+	CurrentMapData = saveMB->GetRandomMapData();
+
 	_instance = this;
 	GenerateMap();
 }
@@ -66,9 +80,9 @@ void AMapGenerator::ClearMap()
 void AMapGenerator::GenerateMap()
 {
 	const int MaxRegenerations = 10;
-	const int MinRooms = FMath::Max(1, RoomsAmount / 2);
+	const int MinRooms = FMath::Max(1, CurrentMapData.RoomsAmmount / 2);
 
-	if (Width < 3 || Height < 3)
+	if (CurrentMapData.Width < 3 || CurrentMapData.Height < 3)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Grid trop petite pour créer des rooms (Width/Height < 3)"));
 		return;
@@ -80,7 +94,7 @@ void AMapGenerator::GenerateMap()
 	{
 		InitGrid();
 
-		if (Grid.Num() == 0 || Width == 0 || Height == 0)
+		if (Grid.Num() == 0 || CurrentMapData.Width == 0 || CurrentMapData.Height == 0)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Empty Grid"));
 			ClearMap();
@@ -91,7 +105,7 @@ void AMapGenerator::GenerateMap()
 
 		Rooms.Empty();
 		int CurrentRoomNumber = 1;
-		while (CurrentRoomNumber <= RoomsAmount)
+		while (CurrentRoomNumber <= CurrentMapData.RoomsAmmount)
 		{
 			FVector SpawnLocation = startTile->GetActorLocation();
 			FRotator SpawnRotation = FRotator::ZeroRotator;
@@ -103,7 +117,7 @@ void AMapGenerator::GenerateMap()
 				UE_LOG(LogTemp, Warning, TEXT("Échec du SpawnActor de AARoom"));
 				break;
 			}
-			room->Init(*startTile, HMax, CurrentRoomNumber, FloorMax);
+			room->Init(*startTile, CurrentMapData.HMax, CurrentRoomNumber, CurrentMapData.FloorMax);
 
 			room->SetLastTile(room->LastTile);
 			Rooms.Add(room);
@@ -113,7 +127,6 @@ void AMapGenerator::GenerateMap()
 				startTile = room->LastTile;
 				if (startTile->bIsBorder)
 				{
-					UE_LOG(LogTemp, Warning, TEXT("LastTile est sur un bord, arrêt de la génération de rooms"));
 					break;
 				}
 
@@ -150,10 +163,10 @@ void AMapGenerator::GenerateMap()
 
 void AMapGenerator::InitGrid()
 {
-	Grid.SetNum(Height);
-	for (int32 Y = 0; Y < Height; ++Y)
+	Grid.SetNum(CurrentMapData.Height);
+	for (int32 Y = 0; Y < CurrentMapData.Height; ++Y)
 	{
-		Grid[Y].Init(nullptr, Width);
+		Grid[Y].Init(nullptr, CurrentMapData.Width);
 	}
 
 	if (!GetWorld())
@@ -167,9 +180,9 @@ void AMapGenerator::InitGrid()
 		return;
 	}
 
-	for (int32 Y = 0; Y < Height; ++Y)
+	for (int32 Y = 0; Y < CurrentMapData.Height; ++Y)
 	{
-		for (int32 X = 0; X < Width; ++X)
+		for (int32 X = 0; X < CurrentMapData.Width; ++X)
 		{
 			FVector SpawnLocation = GetActorLocation() + FVector(X * TileSize, Y * TileSize, 0.f);
 			FRotator SpawnRotation = FRotator::ZeroRotator;
@@ -213,20 +226,51 @@ AMapGenerator& AMapGenerator::Get()
 
 void AMapGenerator::GetRandomEnemies(const FVector& Location, const FRotator& Rotation)
 {
-	if (Enemies.Num() == 0 || !GetWorld()) return ;
-	int32 Index = FMath::RandRange(0, Enemies.Num() - 1);
-	TSubclassOf<AUEntity> EnemyClass = Enemies[Index];
-	if (!EnemyClass) return ;
+	if (Enemies.Num() == 0 || !GetWorld())
+		return;
+
+	const int32 ClassIndex = FMath::RandRange(0, Enemies.Num() - 1);
+	TSubclassOf<AUEntity> EnemyClass = Enemies[ClassIndex];
+	if (!EnemyClass)
+		return;
+
 	FActorSpawnParameters SpawnParams;
-	UE_LOG(LogTemp, Display, TEXT("SpawnEnemies"));
 	SpawnParams.Owner = this;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-	GetWorld()->SpawnActor<AUEntity>(EnemyClass, Location, Rotation, SpawnParams);
+
+	AUEntity* Spawned = GetWorld()->SpawnActor<AUEntity>(EnemyClass, Location, Rotation, SpawnParams);
+	if (!Spawned)
+		return;
+
+	AEnemies* SpawnedEnemy = Cast<AEnemies>(Spawned);
+	if (!SpawnedEnemy)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Spawned actor is not AEnemies: %s"), *Spawned->GetName());
+		return;
+	}
+
+	if (CurrentMapData.Enemies.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("CurrentMapData.Enemies is empty"));
+		return;
+	}
+
+	const int32 DataIndex = FMath::RandRange(0, CurrentMapData.Enemies.Num() - 1);
+	const FMonsterStruct& MonsterData = CurrentMapData.Enemies[DataIndex];
+
+	// Stocke la data brute sur l'ennemi
+	SpawnedEnemy->Enemies = MonsterData;
+
+	// Applique les stats runtime au component
+	if (UCharacterComponent* CharComp = SpawnedEnemy->FindComponentByClass<UCharacterComponent>())
+	{
+		CharComp->SetStatByEnnemiData(MonsterData.EnnemiData);
+	}
 }
 
 ATile* AMapGenerator::GetTile(int32 X, int32 Y)
 {
-	if (X < 0 || Y < 0 || X >= Width || Y >= Height)
+	if (X < 0 || Y < 0 || X >= CurrentMapData.Width || Y >= CurrentMapData.Height)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("GetTile hors bounds: %d,%d"), X, Y);
 		return nullptr;

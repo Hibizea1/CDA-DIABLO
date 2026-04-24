@@ -21,6 +21,8 @@ public:
 	static void SaveRequest(const FPlayerData& Player);
 	
 	static void GetItemJSON(TFunction<void(bool, FString)> OnCompleted);
+	
+	static void GetMonsterAndBiomesJSON(TFunction<void(bool, FString)> OnCompleted);
 
 	UFUNCTION(BlueprintCallable)
 	static void SaveInventories(const TArray<FItemSave>& Items, const TArray<FItemSave>& Equipment);
@@ -34,4 +36,9 @@ public:
 	static FString Access_Token;
 
 	static FString Refresh_Token;
+
+	// Envoie un JSON vers l'endpoint de synchronisation Wiki
+	// Json : payload JSON à envoyer
+	// SyncToken : token optionnel à envoyer dans l'en-tête X-Sync-Token
+	static void SyncWikiGameData(const FString& Json, const FString& SyncToken);
 };

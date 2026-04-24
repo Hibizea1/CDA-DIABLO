@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ItemDataAsset.h"
+#include "ItemStruct.h"
 #include "GameFramework/SaveGame.h"
 #include "UItemSaveGame.generated.h"
 
@@ -22,13 +23,16 @@ struct FItemData
 	EEquipmentType Type;
 
 	UPROPERTY(BlueprintReadWrite)
-	int32 Rarity;
+	ERarity Rarity;
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 ItemID;
 
 	UPROPERTY(BlueprintReadWrite)
 	int32 Price;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 DamageMultiplayer;
 
 	UPROPERTY(BlueprintReadWrite)
 	FString MeshPath;

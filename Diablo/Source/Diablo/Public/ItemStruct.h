@@ -24,13 +24,25 @@ struct FItemStruct : public FTableRowBase
 	int32 Item_ID = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	FString Slug;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
 	FString Name;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	FString Description;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	TArray<FString> CategorySlugs;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
 	int32 ItemLevel = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
 	int32 DamageMultiplier = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item Struct")
+	int32 Price = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Type")
 	EEquipmentType EquipmentType = EEquipmentType::Weapon;

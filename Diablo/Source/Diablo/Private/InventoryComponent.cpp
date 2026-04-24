@@ -3,10 +3,14 @@
 
 #include "InventoryComponent.h"
 
+#include "CharacterComponent.h"
 #include "FPlayerData.h"
 #include "UItemSaveGame.h"
 #include "UJsonHelper.h"
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
+class UCharacterComponent;
 // Sets default values for this component's properties
 UInventoryComponent::UInventoryComponent()
 {
@@ -15,6 +19,27 @@ UInventoryComponent::UInventoryComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
+}
+
+int32 UInventoryComponent::GetPlayerCharacter() const
+{
+	if (!GetWorld())
+	{
+		return 1;
+	}
+
+	ACharacter* PlayerChar = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerChar)
+	{
+		return 1;
+	}
+
+	if (UCharacterComponent* CharComp = PlayerChar->FindComponentByClass<UCharacterComponent>())
+	{
+		return FMath::Max(1, CharComp->GetStats().CurrentLevel);
+	}
+
+	return 1;
 }
 
 
@@ -27,13 +52,12 @@ void UInventoryComponent::BeginPlay()
 }
 
 void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
-	FActorComponentTickFunction* ThisTickFunction)
+                                        FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 }
 
 
-// Called every frame
 static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
 {
 	FItemStruct Out;
@@ -52,7 +76,8 @@ static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
 	// Si ItemData est vide (ID non trouvé), log et retourner une structure par défaut
 	if (ItemData.ItemID == 0 && ItemData.Name.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("ConvertSavedToRuntime: Item with ID %d not found in ItemSaveGame"), Saved.item_id);
+		UE_LOG(LogTemp, Warning, TEXT("ConvertSavedToRuntime: Item with ID %d not found in ItemSaveGame"),
+		       Saved.item_id);
 		return Out;
 	}
 
@@ -66,24 +91,7 @@ static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
 	Out.EquipmentType = ItemData.Type;
 	Out.WeaponType = ItemData.WeaponType;
 	// ItemData.Rarity est un int32 ; convertir en ERarity en clampant
-	int32 R = ItemData.Rarity;
-	if (Saved.rarity > 0)
-	{
-		R = Saved.rarity; // préférer la rareté sauvegardée si fournie
-	}
-	switch (R)
-	{
-	case 0:
-		Out.Rarity = ERarity::Common; break;
-	case 1:
-		Out.Rarity = ERarity::Rare; break;
-	case 2:
-		Out.Rarity = ERarity::Epic; break;
-	case 3:
-		Out.Rarity = ERarity::Legendary; break;
-	default:
-		Out.Rarity = ERarity::Common; break;
-	}
+	Out.Rarity = ItemData.Rarity;
 
 	Out.IconPath = ItemData.IconPath;
 	Out.MeshPath = ItemData.MeshPath;
@@ -110,17 +118,22 @@ void UInventoryComponent::SetInventory(FPlayerData playerData)
 	}
 }
 
-void UInventoryComponent::AddItem(EInventoryType inventoryType, const FItemStruct& NewItem)
+int UInventoryComponent::AddItem(EInventoryType inventoryType, const FItemStruct& NewItem)
 {
+	UE_LOG(LogTemp, Log, TEXT("Item Added : {%s, %d, %hd}"), *NewItem.Name, NewItem.ItemLevel, NewItem.Rarity)
+
 	switch (inventoryType)
 	{
 	case Inventory:
 		Items.Add(NewItem);
+		return Items.IndexOfByKey(NewItem);
 		break;
 	case Equipment:
 		Equipments.Add(NewItem);
+		return Equipments.IndexOfByKey(NewItem);
 		break;
 	}
+	return 0;
 }
 
 FItemStruct UInventoryComponent::GetItem(EInventoryType inventoryType, int32 index)
@@ -134,7 +147,7 @@ FItemStruct UInventoryComponent::GetItem(EInventoryType inventoryType, int32 ind
 		}
 		break;
 	case Equipment:
-		if (Equipments.IsValidIndex(index)) 
+		if (Equipments.IsValidIndex(index))
 		{
 			return Equipments[index];
 		}
@@ -146,20 +159,47 @@ FItemStruct UInventoryComponent::GetItem(EInventoryType inventoryType, int32 ind
 	return FItemStruct();
 }
 
-void UInventoryComponent::RemoveItem(EInventoryType inventoryType, FItemStruct ItemToRemove)
+bool UInventoryComponent::HasWeapon()
+{
+	for (const FItemStruct& Item : Equipments)
+	{
+		if (Item.EquipmentType == EEquipmentType::Weapon)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+FItemStruct UInventoryComponent::GetEquipedWeapon()
+{
+	for (const FItemStruct& Item : Equipments)
+	{
+		if (Item.EquipmentType == EEquipmentType::Weapon)
+		{
+			return Item;
+		}
+	}
+
+	return FItemStruct();
+}
+
+void UInventoryComponent::RemoveItem(EInventoryType inventoryType, int32 Index)
 {
 	switch (inventoryType)
 	{
 	case Inventory:
-		if (Items.Contains(ItemToRemove))
+		if (Items.IsValidIndex(Index))
 		{
-			Items.Remove(ItemToRemove);
+			Items.RemoveAt(Index);
 		}
 		break;
+
 	case Equipment:
-		if (Equipments.Contains(ItemToRemove))
+		if (Equipments.IsValidIndex(Index))
 		{
-			Equipments.Remove(ItemToRemove);
+			Equipments.RemoveAt(Index);
 		}
 		break;
 	}

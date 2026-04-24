@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InventoryComponent.h"
 #include "UEntity.h"
 #include "PlayerStats.h"
 #include "Components/ActorComponent.h"
@@ -12,6 +13,7 @@ struct FPlayerData;
 
 // Declare a Blueprint-friendly dynamic multicast delegate that passes an FDeathStruct
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnLevelUp);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDeathCharacter);
 
 UCLASS(ClassGroup=(Character), meta=(BlueprintSpawnableComponent))
 class DIABLO_API UCharacterComponent : public UActorComponent
@@ -21,6 +23,8 @@ class DIABLO_API UCharacterComponent : public UActorComponent
 protected:
 	float BaseDamage = 20.f;
 	float DamageMultiplier = 1.2f;
+	UPROPERTY()
+	UInventoryComponent* Inventory;
 
 public:
 	// Sets default values for this component's properties
@@ -46,10 +50,14 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Events")
 	FOnLevelUp OnLevelUp;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Events")
+	FOnDeathCharacter OnDeathCharacter;
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	void GetPlayerInventory();
 
 	void CalculateHealth();
 	void CalculateStamina();
@@ -58,7 +66,10 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetStat(FPlayerData _stat);
+	void SetStatByPlayerData(FPlayerData _stat);
+
+	UFUNCTION(BlueprintCallable)
+	void SetStatByEnnemiData(FEnnemiData _stat);
 
 	UFUNCTION(BlueprintCallable)
 	void AddExp(int Value);

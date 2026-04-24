@@ -2,14 +2,13 @@
 
 #include "UHTTPRequest.h"
 
-#include "FItemsRoot.h"
 #include "FPlayerData.h"
 #include "UJsonHelper.h"
 #include "http.h"
+#include "MonsterAndBiomsSaveGame.h"
 #include "Misc/AES.h"
 #include "Misc/Base64.h"
-#include "JsonObjectConverter.h"
-#include "Kismet/GameplayStatics.h"
+
 
 
 struct FItemData;
@@ -24,7 +23,7 @@ void UUHTTPRequest::SaveRequest(const FPlayerData& Player)
 	TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request =
 		HttpModule.CreateRequest();
 
-	Request->SetURL(FString("http://127.0.0.1:8080/php/update_character.php"));
+	Request->SetURL(FString("https://localhost:8443/php/update_character.php"));
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
@@ -50,7 +49,7 @@ void UUHTTPRequest::SaveRequest(const FPlayerData& Player)
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonPayload);
 	if (!FJsonSerializer::Serialize(RootObject, Writer))
 	{
-		UE_LOG(LogTemp, Error, TEXT("SaveRequest: Failed to serialize JSON payload"));
+		UE_LOG(LogHttp, Error, TEXT("SaveRequest: Failed to serialize JSON payload"));
 		return;
 	}
 
@@ -74,11 +73,11 @@ void UUHTTPRequest::SaveRequest(const FPlayerData& Player)
 
 			if (Code != 200)
 			{
-				UE_LOG(LogTemp, Error, TEXT("HTTP Error code: %d Message: %s"), Code, *ResponseBody);
+				UE_LOG(LogHttp, Error, TEXT("HTTP Error code: %d Message: %s"), Code, *ResponseBody);
 				return;
 			}
 
-			UE_LOG(LogTemp, Log, TEXT("SaveRequest Server Response: %s"), *ResponseBody);
+			UE_LOG(LogHttp, Log, TEXT("SaveRequest Server Response: %s"), *ResponseBody);
 		}
 	);
 
@@ -89,7 +88,7 @@ void UUHTTPRequest::GetItemJSON(TFunction<void(bool, FString)> OnCompleted)
 {
 	FHttpModule& Http = FHttpModule::Get();
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/php/get_item.php");
+	Request->SetURL("https://localhost:8443/php/get_item.php");
 	Request->SetVerb("GET");
 	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
 	Request->SetHeader("Content-Type", "application/json");
@@ -99,16 +98,46 @@ void UUHTTPRequest::GetItemJSON(TFunction<void(bool, FString)> OnCompleted)
 		{
 			if (!bSuccess || !Res.IsValid())
 			{
-				UE_LOG(LogTemp, Error, TEXT("GetItemJSON: Failed to download JSON"));
+				UE_LOG(LogHttp, Error, TEXT("GetItemJSON: Failed to download JSON"));
 				OnCompleted(false, Res->GetContentAsString());
 				return;
 			}
-			UE_LOG(LogTemp, Error, TEXT("GetItemJSON: %s"), *Res->GetContentAsString());
+			UE_LOG(LogHttp, Log, TEXT("GetItemJSON: %s"), *Res->GetContentAsString());
 
 			FString JsonContent = Res->GetContentAsString();
 			TMap<FString, FItemArrayWrapper> ItemsByType = UJsonHelper::ParseItemsJSON(JsonContent);
 
 			UJsonHelper::SaveItemsToSaveGame(ItemsByType);
+			OnCompleted(true, "success");
+		});
+
+	Request->ProcessRequest();
+}
+
+void UUHTTPRequest::GetMonsterAndBiomesJSON(TFunction<void(bool, FString)> OnCompleted)
+{
+	FHttpModule& Http = FHttpModule::Get();
+	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
+	Request->SetURL("https://localhost:8443/php/get_monsters_biomes.php");
+	Request->SetVerb("GET");
+	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
+	Request->SetHeader("Content-Type", "application/json");
+
+	Request->OnProcessRequestComplete().BindLambda(
+		[OnCompleted](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
+		{
+			if (!bSuccess || !Res.IsValid())
+			{
+				UE_LOG(LogHttp, Error, TEXT("GetMonsterAndBiomesJSON: Failed to download JSON"));
+				OnCompleted(false, Res->GetContentAsString());
+				return;
+			}
+			UE_LOG(LogHttp, Log, TEXT("GetMonsterAndBiomesJSON: %s"), *Res->GetContentAsString());
+
+			FString JsonContent = Res->GetContentAsString();
+			TMap<FString, FMonsterAndBiomesWrapper> ItemsByType = UJsonHelper::ParseBiomesAndMonstersJSON(JsonContent);
+
+			UJsonHelper::SaveBiomesAndMonsterToSaveGame(ItemsByType);
 			OnCompleted(true, "success");
 		});
 
@@ -150,13 +179,13 @@ void UUHTTPRequest::SaveInventories(const TArray<FItemSave>& Items, const TArray
 	TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&JsonPayload);
 	FJsonSerializer::Serialize(RootObject, Writer);
 
-	UE_LOG(LogTemp, Log, TEXT("SaveInventories JSON: %s"), *JsonPayload);
+	UE_LOG(LogHttp, Log, TEXT("SaveInventories JSON: %s"), *JsonPayload);
 
 	// === Requête HTTP ===
 	FHttpModule& Http = FHttpModule::Get();
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
 
-	Request->SetURL("http://127.0.0.1:8080/php/save_inventories.php");
+	Request->SetURL("https://localhost:8443/php/save_inventories.php");
 	Request->SetVerb("POST");
 	Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
 	Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + Access_Token);
@@ -167,11 +196,11 @@ void UUHTTPRequest::SaveInventories(const TArray<FItemSave>& Items, const TArray
 		{
 			if (!bSuccess || !Res.IsValid())
 			{
-				UE_LOG(LogTemp, Error, TEXT("SaveInventories: request failed."));
+				UE_LOG(LogHttp, Error, TEXT("SaveInventories: request failed."));
 				return;
 			}
 
-			UE_LOG(LogTemp, Log, TEXT("SaveInventories response: %s"), *Res->GetContentAsString());
+			UE_LOG(LogHttp, Log, TEXT("SaveInventories response: %s"), *Res->GetContentAsString());
 		}
 	);
 
@@ -185,7 +214,7 @@ TArray<FString> UUHTTPRequest::GetCSVFilePath(FString Path)
 	FString CsvFile = FPaths::ProjectContentDir() + Path;
 	if (FPaths::FileExists(CsvFile))
 	{
-		UE_LOG(LogTemp, Log, TEXT("File %s exists"), *CsvFile);
+		UE_LOG(LogHttp, Log, TEXT("File %s exists"), *CsvFile);
 		FFileHelper::LoadANSITextFileToStrings(*CsvFile, NULL, Lines);
 	}
 
@@ -197,7 +226,7 @@ void UUHTTPRequest::SendToServer(const FString& Json)
 	FHttpModule& Http = FHttpModule::Get();
 
 	TSharedRef<IHttpRequest> Request = Http.CreateRequest();
-	Request->SetURL("http://127.0.0.1:8080/php/update_items.php");
+	Request->SetURL("https://localhost:8443/php/update_items.php");
 	Request->SetVerb("POST");
 	Request->SetHeader("Content-Type", "application/json");
 	Request->SetContentAsString(Json);
@@ -207,17 +236,64 @@ void UUHTTPRequest::SendToServer(const FString& Json)
 		{
 			if (bSuccess && Res.IsValid())
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Items synced: %s"),
+				UE_LOG(LogHttp, Log, TEXT("Items synced: %s"),
 				       *Res->GetContentAsString());
 			}
 			else
 			{
-				UE_LOG(LogTemp, Error, TEXT("Items sync failed"));
+				UE_LOG(LogHttp, Error, TEXT("Items sync failed"));
 			}
 		}
 	);
 
 	Request->ProcessRequest();
+}
+
+void UUHTTPRequest::SyncWikiGameData(const FString& Json, const FString& SyncToken)
+{
+    FHttpModule& Http = FHttpModule::Get();
+    TSharedRef<IHttpRequest> Request = Http.CreateRequest();
+
+    // Endpoint and method
+    Request->SetURL("https://localhost:8443/php/sync_wiki_game_data.php");
+    Request->SetVerb("POST");
+
+    // Required headers
+    Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
+    Request->SetHeader(TEXT("X-Client-Type"), TEXT("game"));
+
+    // Optional sync token header (required server-side if configured)
+    if (!SyncToken.IsEmpty())
+    {
+        Request->SetHeader(TEXT("X-Sync-Token"), SyncToken);
+    }
+
+    Request->SetContentAsString(Json);
+
+    Request->OnProcessRequestComplete().BindLambda(
+        [](FHttpRequestPtr Req, FHttpResponsePtr Res, bool bSuccess)
+        {
+            if (!bSuccess || !Res.IsValid())
+            {
+                UE_LOG(LogHttp, Error, TEXT("SyncWikiGameData: HTTP request failed or no response"));
+                return;
+            }
+
+            const int32 Code = Res->GetResponseCode();
+            const FString Body = Res->GetContentAsString();
+
+            if (Code >= 200 && Code < 300)
+            {
+                UE_LOG(LogHttp, Log, TEXT("SyncWikiGameData success (code %d): %s"), Code, *Body);
+            }
+            else
+            {
+                UE_LOG(LogHttp, Error, TEXT("SyncWikiGameData failed (code %d): %s"), Code, *Body);
+            }
+        }
+    );
+
+    Request->ProcessRequest();
 }
 
 FString UUHTTPRequest::CleanWeaponType(FString& RawType)

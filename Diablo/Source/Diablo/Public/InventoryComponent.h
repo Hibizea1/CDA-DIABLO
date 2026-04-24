@@ -24,6 +24,7 @@ class DIABLO_API UInventoryComponent : public UActorComponent
 public:
 	// Sets default values for this component's properties
 	UInventoryComponent();
+	int32 GetPlayerCharacter() const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<FItemStruct> Items;
@@ -44,11 +45,15 @@ public:
 	void SetInventory(FPlayerData playerData);
 
 	UFUNCTION(BlueprintCallable)
-	void AddItem(EInventoryType inventoryType,const FItemStruct& NewItem);
+	int AddItem(EInventoryType inventoryType,const FItemStruct& NewItem);
 
 	UFUNCTION(BlueprintCallable)
 	FItemStruct GetItem(EInventoryType inventoryType, int32 index);
+	bool HasWeapon();
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveItem(EInventoryType inventoryType, FItemStruct ItemToRemove);
+	FItemStruct GetEquipedWeapon();
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveItem(EInventoryType inventoryType, int32 Index);
 };
