@@ -149,10 +149,16 @@ void AEnemies::SpawnItem()
 		UE_LOG(LogTemp, Log, TEXT("SpawnItem: drop rate failed"));
 		return;
 	}
-	FItemData RandomItem = ItemSave->GetItemByID(Enemies.Drops[0].Item_ID);
-	FItemStruct ConvertedItem = UJsonHelper::CreateNewItem(RandomItem, CalculateLevel(RolledRarity), RolledRarity);
 
-	if (RandomItem.ItemID == 0 && RandomItem.Name.IsEmpty())
+	if (Enemies.Drops.IsEmpty())
+	{
+		return;
+	}
+	
+	FItemStruct RandomItem = ItemSave->GetItemByID(Enemies.Drops[0].Item_ID);
+	RandomItem.Rarity = RolledRarity;
+	RandomItem.ItemLevel = CalculateLevel(RolledRarity);
+	if (RandomItem.Item_ID == 0 && RandomItem.Name.IsEmpty())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("SpawnItem: aucun item valide trouvé"));
 		return;
@@ -175,7 +181,7 @@ void AEnemies::SpawnItem()
 		return;
 	}
 
-	SpawnedItem->InitItem(ConvertedItem);
+	SpawnedItem->InitItem(RandomItem);
 }
 
 void AEnemies::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

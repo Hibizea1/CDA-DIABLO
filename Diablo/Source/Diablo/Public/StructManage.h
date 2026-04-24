@@ -7,6 +7,7 @@
 
 class AUEntity;
 
+#pragma region Struct
 USTRUCT(BlueprintType)
 struct FDeathStruct
 {
@@ -204,4 +205,5 @@ struct FMapData
 	int MaxMobPerRoom;
 };
 
-#pragma endregion	
+#pragma endregion
+#pragma endregion

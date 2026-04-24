@@ -23,8 +23,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="JSON")
 	static int32 GetStoredUserId();
 
-	UFUNCTION(BlueprintCallable)
-	static TArray<FPlayerScore> ParseScores(const FString& JsonString);
 
 	UFUNCTION(BlueprintCallable)
 	static FString ParseMessage(const FString& JsonString);
@@ -43,7 +41,6 @@ public:
 	static void SaveBiomesAndMonsterToSaveGame(const TMap<FString, FMonsterAndBiomesWrapper>& MonsterAndBiomesType);
 	static void SaveMapData(const TMap<FString, FMonsterAndBiomesWrapper>& MonsterAndBiomesType);
 
-	static FItemStruct CreateNewItem(const FItemData& Item, int32 Level, ERarity Rarity);
 
 	static TMap<FString, FItemArrayWrapper> ParseItemsJSON(const FString& JsonContent);
 
@@ -62,7 +59,7 @@ public:
 	static UMonsterAndBiomsSaveGame* LoadMonsterAndBiomesSaveGame();
 
 	UFUNCTION(BlueprintCallable)
-	static TArray<FItemSave> ParseInventoriesFromJson(const FString& JsonString);
+	static TArray<FItemDataToSave> ParseInventoriesFromJson(const FString& JsonString);
 
 	static FString BuildItemsJson(const TArray<FItemStruct*>& Rows);
 

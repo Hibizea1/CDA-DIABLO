@@ -3,46 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ItemDataAsset.h"
 #include "ItemStruct.h"
 #include "GameFramework/SaveGame.h"
 #include "UItemSaveGame.generated.h"
-
-USTRUCT(BlueprintType)
-struct FItemData
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 ID;
-
-	UPROPERTY(BlueprintReadWrite)
-	FString Name;
-
-	UPROPERTY(BlueprintReadWrite)
-	EEquipmentType Type;
-
-	UPROPERTY(BlueprintReadWrite)
-	ERarity Rarity;
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 ItemID;
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 Price;
-
-	UPROPERTY(BlueprintReadWrite)
-	int32 DamageMultiplayer;
-
-	UPROPERTY(BlueprintReadWrite)
-	FString MeshPath;
-	
-	UPROPERTY(BlueprintReadWrite)
-	FString IconPath;
-
-	UPROPERTY(BlueprintReadWrite)
-	EWeaponType WeaponType;
-};
 
 USTRUCT(BlueprintType)
 struct FItemArrayWrapper
@@ -50,7 +13,7 @@ struct FItemArrayWrapper
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	TArray<FItemData> Items;
+	TArray<FItemStruct> Items;
 };
 
 UCLASS()
@@ -63,30 +26,30 @@ public:
 	TMap<FString, FItemArrayWrapper> ItemsByType;
 
 	UFUNCTION(BlueprintCallable, Category="Items")
-	FItemData GetItemByID(int32 ItemID) const
+	FItemStruct GetItemByID(int32 ItemID) const
 	{
 		for (const auto& Pair : ItemsByType)
 		{
-			for (const FItemData& Item : Pair.Value.Items)
+			for (const FItemStruct& Item : Pair.Value.Items)
 			{
-				if (Item.ItemID == ItemID)
+				if (Item.Item_ID == ItemID)
 					return Item;
 			}
 		}
 
 		// Return empty/default if not found
-		return FItemData();
+		return FItemStruct();
 	}
 
 	UFUNCTION(BlueprintCallable, Category="Items")
-	FItemData GetItemRandom() const
+	FItemStruct GetItemRandom() const
 	{
 		// Rassembler tous les items dans un tableau
-		TArray<FItemData> AllItems;
+		TArray<FItemStruct> AllItems;
 		AllItems.Reserve(128);
 		for (const auto& Pair : ItemsByType)
 		{
-			for (const FItemData& Item : Pair.Value.Items)
+			for (const FItemStruct& Item : Pair.Value.Items)
 			{
 				AllItems.Add(Item);
 			}
@@ -94,7 +57,7 @@ public:
 
 		if (AllItems.Num() == 0)
 		{
-			return FItemData();
+			return FItemStruct();
 		}
 
 		int32 Index = FMath::RandRange(0, AllItems.Num() - 1);
@@ -103,13 +66,13 @@ public:
 
 	// Optional: helper to get all items of a weapon type
 	UFUNCTION(BlueprintCallable, Category="Items")
-	TArray<FItemData> GetItemsByType(const FString& WeaponType) const
+	TArray<FItemStruct> GetItemsByType(const FString& WeaponType) const
 	{
 		const FItemArrayWrapper* Wrapper = ItemsByType.Find(WeaponType);
 		if (Wrapper)
 		{
 			return Wrapper->Items;
 		}
-		return TArray<FItemData>();
+		return TArray<FItemStruct>();
 	}
 };

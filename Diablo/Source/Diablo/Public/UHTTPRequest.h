@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FItemSave.h"
+#include "FItemDataToSave.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "UHTTPRequest.generated.h"
 
@@ -25,7 +25,7 @@ public:
 	static void GetMonsterAndBiomesJSON(TFunction<void(bool, FString)> OnCompleted);
 
 	UFUNCTION(BlueprintCallable)
-	static void SaveInventories(const TArray<FItemSave>& Items, const TArray<FItemSave>& Equipment);
+	static void SaveInventories(const TArray<FItemDataToSave>& Items, const TArray<FItemDataToSave>& Equipment);
 
 	static void SendToServer(const FString& Json);
 

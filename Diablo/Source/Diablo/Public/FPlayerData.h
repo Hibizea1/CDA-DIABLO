@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FItemSave.h"
+#include "FItemDataToSave.h"
 #include "FPlayerData.generated.h"
 
 /**
@@ -40,8 +40,8 @@ public:
 	int32 intelligence;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FItemSave> Items;
+	TArray<FItemDataToSave> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	TArray<FItemSave> Equipment;
+	TArray<FItemDataToSave> Equipment;
 };

@@ -58,7 +58,7 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 }
 
 
-static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
+static FItemStruct ConvertSavedToRuntime(const FItemDataToSave& Saved)
 {
 	FItemStruct Out;
 
@@ -71,10 +71,10 @@ static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
 	}
 
 	// Récupérer les données de l'item par son ID
-	FItemData ItemData = ItemSaveGame->GetItemByID(Saved.item_id);
+	FItemStruct ItemData = ItemSaveGame->GetItemByID(Saved.item_id);
 
 	// Si ItemData est vide (ID non trouvé), log et retourner une structure par défaut
-	if (ItemData.ItemID == 0 && ItemData.Name.IsEmpty())
+	if (ItemData.Item_ID == 0 && ItemData.Name.IsEmpty())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ConvertSavedToRuntime: Item with ID %d not found in ItemSaveGame"),
 		       Saved.item_id);
@@ -82,13 +82,13 @@ static FItemStruct ConvertSavedToRuntime(const FItemSave& Saved)
 	}
 
 	// Mapper les champs de FItemData -> FItemStruct
-	Out.Item_ID = ItemData.ItemID != 0 ? ItemData.ItemID : Saved.item_id;
+	Out.Item_ID = ItemData.Item_ID != 0 ? ItemData.Item_ID : Saved.item_id;
 	Out.Name = ItemData.Name;
 	// Utiliser le lvl sauvegardé si présent sinon garder ItemLevel par défaut
 	Out.ItemLevel = (Saved.lvl > 0) ? Saved.lvl : 1;
 	// DamageMultiplier n'existe pas dans ItemData; on peut dériver d'ItemLevel ou laisser par défaut
 	Out.DamageMultiplier = 1;
-	Out.EquipmentType = ItemData.Type;
+	Out.EquipmentType = ItemData.EquipmentType;
 	Out.WeaponType = ItemData.WeaponType;
 	// ItemData.Rarity est un int32 ; convertir en ERarity en clampant
 	Out.Rarity = ItemData.Rarity;
@@ -107,12 +107,12 @@ void UInventoryComponent::SetInventory(FPlayerData playerData)
 	Items.Empty();
 	Equipments.Empty();
 
-	for (const FItemSave& Saved : playerData.Items)
+	for (const FItemDataToSave& Saved : playerData.Items)
 	{
 		Items.Add(ConvertSavedToRuntime(Saved));
 	}
 
-	for (const FItemSave& Saved : playerData.Equipment)
+	for (const FItemDataToSave& Saved : playerData.Equipment)
 	{
 		Equipments.Add(ConvertSavedToRuntime(Saved));
 	}

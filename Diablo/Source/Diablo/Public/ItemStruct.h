@@ -1,7 +1,6 @@
 // Diablo/Source/Diablo/Public/ItemStruct.h
 #pragma once
 #include "CoreMinimal.h"
-#include "ItemDataAsset.h"
 #include "ItemStruct.generated.h"
 
 class UTexture2D;
@@ -13,6 +12,25 @@ enum class ERarity : uint8
 	Rare      UMETA(DisplayName = "Rare"),
 	Epic      UMETA(DisplayName = "Epic"),
 	Legendary UMETA(DisplayName = "Legendary")
+};
+
+UENUM(BlueprintType)
+enum class EEquipmentType : uint8
+{
+	Weapon      UMETA(DisplayName = "Weapon"),
+	Head      UMETA(DisplayName = "Head"),
+	Chest UMETA(DisplayName = "Chest"),
+	Leggings UMETA(DisplayName = "Leggings"),
+	Bots UMETA(DisplayName = "Bots")
+};
+
+UENUM(BlueprintType)
+enum class EWeaponType : uint8
+{
+	Bow      UMETA(DisplayName = "Bow"),
+	Sword      UMETA(DisplayName = "Sword"),
+	Axe UMETA(DisplayName = "Axe"),
+	Shield UMETA(DisplayName = "Shield")
 };
 
 USTRUCT(BlueprintType)

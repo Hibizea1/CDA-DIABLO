@@ -79,6 +79,7 @@ void UCharacterComponent::CalculateStats()
 void UCharacterComponent::SetHealth(float damage)
 {
 	Stats.CurrentHealth -= damage;
+	OnTakeDamage.Broadcast();
 	if (Stats.CurrentHealth <= 0)
 	{
 		Stats.CurrentHealth = 0.f;

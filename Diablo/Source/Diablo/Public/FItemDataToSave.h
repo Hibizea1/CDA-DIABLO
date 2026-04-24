@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "ItemStruct.h"
-#include "FItemSave.generated.h"
+#include "FItemDataToSave.generated.h"
 /**
  * 
  */
 USTRUCT(BlueprintType)
-struct FItemSave : public FTableRowBase
+struct FItemDataToSave : public FTableRowBase
 {
 	GENERATED_BODY();
 

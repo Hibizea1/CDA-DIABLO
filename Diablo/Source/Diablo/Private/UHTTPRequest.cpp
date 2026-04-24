@@ -144,13 +144,13 @@ void UUHTTPRequest::GetMonsterAndBiomesJSON(TFunction<void(bool, FString)> OnCom
 	Request->ProcessRequest();
 }
 
-void UUHTTPRequest::SaveInventories(const TArray<FItemSave>& Items, const TArray<FItemSave>& Equipment)
+void UUHTTPRequest::SaveInventories(const TArray<FItemDataToSave>& Items, const TArray<FItemDataToSave>& Equipment)
 {
 	// === Construction manuelle du JSON ===
 	TSharedRef<FJsonObject> RootObject = MakeShared<FJsonObject>();
 	TArray<TSharedPtr<FJsonValue>> JsonItems;
 
-	for (const FItemSave& Item : Items)
+	for (const FItemDataToSave& Item : Items)
 	{
 		TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
 		Obj->SetNumberField("item_id", Item.item_id);
@@ -161,7 +161,7 @@ void UUHTTPRequest::SaveInventories(const TArray<FItemSave>& Items, const TArray
 	}
 
 	TArray<TSharedPtr<FJsonValue>> JsonEquipment;
-	for (const FItemSave& _Equipment : Equipment)
+	for (const FItemDataToSave& _Equipment : Equipment)
 	{
 		TSharedRef<FJsonObject> Obj = MakeShared<FJsonObject>();
 		Obj->SetNumberField("item_id", _Equipment.item_id);

@@ -3,7 +3,6 @@
 
 #include "UJsonHelper.h"
 
-#include "FPlayerScore.h"
 #include "ItemStruct.h"
 #include "JsonUtilities.h"
 #include "MapDataSave.h"
@@ -43,39 +42,6 @@ static bool HasRepeatedSpecialChar(const FString& Password, const FString& Speci
 int32 UJsonHelper::GetStoredUserId()
 {
 	return StoredUserId;
-}
-
-TArray<FPlayerScore> UJsonHelper::ParseScores(const FString& JsonString)
-{
-	TArray<FPlayerScore> Result;
-
-	TSharedPtr<FJsonValue> Root;
-	TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonString);
-
-	if (FJsonSerializer::Deserialize(Reader, Root) && Root->Type == EJson::Array)
-	{
-		for (const auto& Value : Root->AsArray())
-		{
-			TSharedPtr<FJsonObject> Obj = Value->AsObject();
-			if (!Obj) continue;
-
-			FPlayerScore Entry;
-			Obj->TryGetStringField(TEXT("username"), Entry.Username);
-			int32 ScoreTemp = 0;
-			if (Obj->TryGetNumberField(TEXT("score"), ScoreTemp))
-			{
-				Entry.Score = ScoreTemp;
-			}
-			else
-			{
-				Entry.Score = 0;
-			}
-
-			Result.Add(Entry);
-		}
-	}
-
-	return Result;
 }
 
 FString UJsonHelper::ParseMessage(const FString& JsonString)
@@ -174,17 +140,17 @@ void UJsonHelper::DebugPrintAllItems()
 
 		UE_LOG(LogTemp, Log, TEXT("=== WeaponType: %s, Items Count: %d ==="), *WeaponType, Wrapper.Items.Num());
 
-		for (const FItemData& Item : Wrapper.Items)
+		for (const FItemStruct& Item : Wrapper.Items)
 		{
-			UE_LOG(LogTemp, Log, TEXT("ID:%d Name:%s Type:%hhd Rarity:%d ItemID:%d Price:%d Mesh:%s"),
-			       Item.ID, *Item.Name, Item.Type, Item.Rarity, Item.ItemID, Item.Price, *Item.MeshPath);
+			UE_LOG(LogTemp, Log, TEXT("Item ID:%d Name:%s Type:%hhd Rarity:%d Price:%d Mesh:%s"),
+			       Item.Item_ID, *Item.Name, Item.EquipmentType, Item.Rarity, Item.Price, *Item.MeshPath);
 		}
 	}
 }
 
-TArray<FItemSave> UJsonHelper::ParseInventoriesFromJson(const FString& JsonString)
+TArray<FItemDataToSave> UJsonHelper::ParseInventoriesFromJson(const FString& JsonString)
 {
-	TArray<FItemSave> Result;
+	TArray<FItemDataToSave> Result;
 
 	UE_LOG(LogTemp, Log, TEXT("Incoming JSON (raw): %s"), *JsonString);
 
@@ -378,33 +344,7 @@ UItemSaveGame* UJsonHelper::LoadItemsSaveGameBP()
 	return nullptr;
 }
 
-FItemStruct UJsonHelper::CreateNewItem(const FItemData& ItemData, int32 Level, ERarity Rarity)
-{
-	FItemStruct Out;
 
-	if (ItemData.ItemID == 0 && ItemData.Name.IsEmpty())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ConvertSavedToRuntime: Item with ID %d not found in ItemSaveGame"), ItemData.ItemID);
-		return Out;
-	}
-
-	Out.Item_ID = ItemData.ItemID;
-	Out.Name = ItemData.Name;
-	
-	Out.ItemLevel = Level;
-	
-	Out.DamageMultiplier = ItemData.DamageMultiplayer;
-	Out.EquipmentType = ItemData.Type;
-	Out.WeaponType = ItemData.WeaponType;
-	
-	Out.Rarity = Rarity;
-
-	Out.IconPath = ItemData.IconPath;
-	Out.MeshPath = ItemData.MeshPath;
-
-
-	return Out;
-}
 
 static void SerializeAndSend(TSharedPtr<FJsonObject> Root)
 {
@@ -754,8 +694,7 @@ TMap<FString, FItemArrayWrapper> UJsonHelper::ParseItemsJSON(const FString& Json
 			TSharedPtr<FJsonObject> Obj = Val->AsObject();
 			if (!Obj.IsValid()) continue;
 
-			FItemData Item;
-			Item.ID = FCString::Atoi(*Obj->GetStringField(TEXT("id")));
+			FItemStruct Item;
 			Item.Name = Obj->GetStringField(TEXT("name"));
 			FString TypeString = Obj->GetStringField(TEXT("type")); // ex: "EItemType::Consumable"
 			FString TypeName;
@@ -772,7 +711,7 @@ TMap<FString, FItemArrayWrapper> UJsonHelper::ParseItemsJSON(const FString& Json
 			if (TypeEnumPtr)
 			{
 				EEquipmentType TypeEnum = static_cast<EEquipmentType>(TypeEnumPtr->GetValueByName(FName(*TypeName)));
-				Item.Type = TypeEnum;
+				Item.EquipmentType = TypeEnum;
 			}
 			FString RarityString = Obj->HasField(TEXT("rarity"))
 				                       ? Obj->GetStringField(TEXT("rarity"))
@@ -791,7 +730,7 @@ TMap<FString, FItemArrayWrapper> UJsonHelper::ParseItemsJSON(const FString& Json
 				}
 			}
  
-			Item.ItemID = FCString::Atoi(*Obj->GetStringField(TEXT("Item_ID")));
+			Item.Item_ID = FCString::Atoi(*Obj->GetStringField(TEXT("Item_ID")));
 			Item.Price = FCString::Atoi(*Obj->GetStringField(TEXT("Price")));
 			Item.MeshPath = Obj->HasField(TEXT("mesh_path")) ? Obj->GetStringField(TEXT("mesh_path")) : FString();
 			Item.IconPath = Obj->HasField(TEXT("imagePath")) ? Obj->GetStringField(TEXT("imagePath")) : FString();

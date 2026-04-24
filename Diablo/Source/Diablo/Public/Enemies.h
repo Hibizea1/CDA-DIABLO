@@ -8,6 +8,8 @@
 #include "GameFramework/Pawn.h"
 #include "Enemies.generated.h"
 
+
+
 enum class ERarity : uint8;
 struct FItemData;
 class AItems;
@@ -26,6 +28,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drop")
 	TSubclassOf<AItems> ItemClass;
+
+
 
 protected:
 	virtual void BeginPlay() override;
